@@ -1,0 +1,52 @@
+# This workflow will build a docker container, publish it to IBM Container Registry, and deploy it to IKS when there is a push to the "main" branch.
+#
+# To configure this workflow:
+#
+# 1. Ensure that your repository contains a Dockerfile
+# 2. Setup secrets in your repository by going to settings: Create ICR_NAMESPACE and IBM_CLOUD_API_KEY
+# 3. Change the values for the IBM_CLOUD_REGION, REGISTRY_HOSTNAME, IMAGE_NAME, IKS_CLUSTER, DEPLOYMENT_NAME, and PORT
+
+name: Build and Test PR
+
+on:
+  pull_request:
+    types: [opened, reopened]
+
+# Environment variables available to all jobs and steps in this workflow
+env:
+  GITHUB_SHA: ${{ github.sha }}
+  IBM_CLOUD_API_KEY: ${{ secrets.IBM_CLOUD_API_KEY }}
+  IBM_CLOUD_REGION: us-south
+  ICR_NAMESPACE: ${{ vars.ICR_NAMESPACE }}
+  REGISTRY_HOSTNAME: us.icr.io
+  IMAGE_NAME: iks-test
+  IKS_CLUSTER: example-iks-cluster-name-or-id
+  DEPLOYMENT_NAME: iks-test
+  PORT: 5001
+
+jobs:
+  pr-pipeline:
+    name: Setup, Test, Build
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+
+    - id: checkout
+      name: Clone repo
+      uses: actions/checkout@v4
+  
+    - id: unit-test
+      name: Run Unit tests
+      run: |
+        npm install
+        npm run test-unit
+
+    - id: build-image
+      name: Build image
+      uses: redhat-actions/buildah-build@v2
+      with:
+        image: us.icr.io/huayuen_tf_test/iks-test
+        tags: "${{ github.sha }}"
+        containerfiles: |
+          ./Dockerfile
+

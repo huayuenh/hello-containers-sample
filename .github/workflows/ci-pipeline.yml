@@ -1,0 +1,145 @@
+# This workflow will build a docker container, publish it to IBM Container Registry, and deploy it to IKS when there is a push to the "main" branch.
+#
+# To configure this workflow:
+#
+# 1. Ensure that your repository contains a Dockerfile
+# 2. Setup secrets in your repository by going to settings: Create ICR_NAMESPACE and IBM_CLOUD_API_KEY
+# 3. Change the values for the IBM_CLOUD_REGION, REGISTRY_HOSTNAME, IMAGE_NAME, IKS_CLUSTER, DEPLOYMENT_NAME, and PORT
+
+name: Build and Deploy to IKS
+
+on:
+  workflow_dispatch:
+    branches: [ main ]
+  push:
+    branches: [ "main" ]
+
+# Environment variables available to all jobs and steps in this workflow
+env:
+  GITHUB_SHA: ${{ github.sha }}
+  IBM_CLOUD_API_KEY: ${{ secrets.IBM_CLOUD_API_KEY }}
+  IBM_CLOUD_REGION: us-south
+  ICR_NAMESPACE: ${{ vars.ICR_NAMESPACE }}
+  REGISTRY_HOSTNAME: us.icr.io
+  IMAGE_NAME: iks-test
+  IKS_CLUSTER: example-iks-cluster-name-or-id
+  DEPLOYMENT_NAME: iks-test
+  PORT: 5001
+
+jobs:
+  setup-build-publish-deploy:
+    name: Setup, Test, Build and Deploy
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+
+    - id: checkout
+      name: Clone repo
+      uses: actions/checkout@v4
+  
+    - id: unit-test
+      name: Run Unit tests
+      run: |
+        npm install
+        npm run test-unit
+
+    - id: build-image
+      name: Build image
+      uses: redhat-actions/buildah-build@v2
+      with:
+        image: us.icr.io/huayuen_tf_test/iks-test
+        tags: "${{ github.sha }}"
+        containerfiles: |
+          ./Dockerfile
+
+    - id: ibmcloud-login
+      uses: IBM/actions-ibmcloud-cli@v1
+      name: IBMCloud CLI setup and login
+      with:
+        api_key: ${{ secrets.IBM_CLOUD_API_KEY }}   
+        region: "us-south"
+        group: cd-setup
+        plugins: container-service, container-registry
+    - name: ICR login
+      run: |
+        ibmcloud login --apikey "${IBM_CLOUD_API_KEY}" -r "${IBM_CLOUD_REGION}" -g default
+        ibmcloud cr region-set "${IBM_CLOUD_REGION}"
+        ibmcloud cr login
+
+
+   # - id: icr-login
+   #   name: Login into IBMCloud Container Registry
+   #   uses: huayuenh/ghacatalog/cr@main
+
+    - name: Push To ICR
+      id: push-to-icr
+      uses: redhat-actions/push-to-registry@v2
+      with:
+        #image: ${{ steps.build-image.outputs.image }}
+        tags: "${{ steps.build-image.outputs.image }}:${{ steps.build-image.outputs.tags }}"
+        #registry: us.icr.io/huayuen_tf_test
+   # - id: ibmcloud-plugin-list
+   #   name: Set up IBMCloud CLI and login
+   #   run: |
+   #     ibmcloud plugin list
+
+   # - id: icr-login
+   #   name: Login into IBMCloud Container Registry
+   #   uses: huayuenh/ghacatalog/cr@main
+    
+   # - id: build-image
+   #   name: Build with Docker
+   #   run: |
+   #     IMAGE_URL="$REGISTRY_HOSTNAME"/"$ICR_NAMESPACE"/"$IMAGE_NAME":"$GITHUB_SHA"
+   #     IMAGE_NAME="$ICR_NAMESPACE"/"$IMAGE_NAME":"$GITHUB_SHA"
+   #     TEST_VAL="hello"
+   #     docker build -t "$IMAGE_URL" \
+   #       --build-arg GITHUB_SHA="$GITHUB_SHA" \
+   #       --build-arg GITHUB_REF="$GITHUB_REF" .
+   #     echo "imagename=${IMAGE_NAME}" >> "$GITHUB_OUTPUT"
+   #     echo "testval=${TEST_VAL}" >> "$GITHUB_OUTPUT"
+   #     echo "image name"
+   #     echo $imagename
+   #     echo "test val"
+   #     echo $testval
+ #     name: Build the image and push to ICR
+ #     uses: huayuenh/ghacatalog/build@main
+
+
+
+ #   - id: test-image-name
+ #     name: Verify image name
+ #     env:
+ #       OUTPUT1: ${{steps.build-image.outputs.imagename}}
+ #       OUTPUT2: ${{steps.build-image.outputs.testval}}
+ #     run: |
+ #         #echo ${{steps.build-image.outputs.image_name}}
+          
+ #         echo "some line"
+ #         echo "${OUTPUT1}"
+ #         echo "2nd line"
+ #         echo "${OUTPUT2}"
+
+
+ #   - id: push-image
+ #     name: Push To ICR
+ #     env:
+ #       OUTPUT1: ${{steps.build-image.outputs.imagename}}
+ #     uses: redhat-actions/push-to-registry@v2
+ #     with:
+ #       image: "${OUTPUT1}"
+ #       tags: "latest"
+ #       registry: us.icr.io
+ #       password: ${{ secrets.IBM_CLOUD_API_KEY }}
+    #- id: push-image
+    #  name: Push image to ICR
+    #  uses: huayuenh/ghacatalog/push@main
+    
+    #- id: unit-tests
+    #  name: Unit Test
+    #  uses: huayuenh/ghacatalog/unit-tests@main
+
+ #   - id: deploy
+ #     name: Deploy to Kubernetes
+ #     uses: huayuenh/ghacatalog/deploy@main
+
