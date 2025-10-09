@@ -32,17 +32,17 @@ jobs:
       name: place holder
       uses: huayuenh/ghacatalog/git-clone@main
 
-   # - id: set-commit-status-start
-     # name: Set up initial commit status
-     # uses: huayuenh/ghacatalog/set-commit-status@main
-     # with:
-     #   github-token: ${{ github.token }}
-     #   state: "pending"
-     #   description: "Running"
-     #   context: "CI Pipeline"
-     #   sha: ${{ github.sha }}
-     #   target_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-     #   github_repository: ${{ github.repository }}
+    - id: set-commit-status-start
+      name: Set up initial commit status
+      uses: huayuenh/ghacatalog/set-commit-status@main
+      with:
+        github_token: ${{ github.token }}
+        state: "pending"
+        description: "Running"
+        context: "CI Pipeline"
+        sha: ${{ github.sha }}
+        target_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        github_repository: ${{ github.repository }}
 
     - id: unit-test
       name: Run Unit tests
