@@ -62,12 +62,7 @@ jobs:
         tags: "${{ github.sha }}"
         containerfiles: |
           ./Dockerfile
-  evaluate:
-    name: Evaluate
-    runs-on: ubuntu-latest
-    environment: production
-    needs: pr-pipeline 
-    steps:
+
     - id: set-commit-status-fail
       if: ${{ failure() }}
       uses: huayuenh/ghacatalog/set-commit-status@main
@@ -76,7 +71,7 @@ jobs:
         state: "failure"
         description: "Complete - Failure"
         context: "PR Pipeline"
-        sha: ${{ needs.start-pipeline.outputs.commit_id }}
+        sha: ${{ github.sha }}
         target_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
         github_repository: ${{ github.repository }}
 
@@ -88,6 +83,6 @@ jobs:
         state: "success"
         description: "Complete - Success"
         context: "PR Pipeline"
-        sha: ${{ needs.start-pipeline.outputs.commit_id }}
+        sha: ${{ github.sha }}
         target_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
         github_repository: ${{ github.repository }}
