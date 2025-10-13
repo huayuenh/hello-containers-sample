@@ -9,6 +9,8 @@
 name: Build and Test PR
 
 on:
+  workflow_dispatch:
+    branches: [ main ]
   pull_request:
     types: [opened, reopened]
 
@@ -31,15 +33,17 @@ jobs:
     - id: test
       name: place holder
       uses: huayuenh/ghacatalog/git-clone@main
-
+    
     - id: set-commit-status-start
       name: Set up initial commit status
       uses: huayuenh/ghacatalog/set-commit-status@main
+      #uses: terraform-ibm-modules/common-pipeline-assets/.github/workflows/set-commit-status.yml
+     # uses: ./set-commit-status.yml
       with:
         github_token: ${{ github.token }}
         state: "pending"
         description: "Running"
-        context: "CI Pipeline"
+        context: "PR Pipeline"
         sha: ${{ github.sha }}
         target_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
         github_repository: ${{ github.repository }}
@@ -58,4 +62,32 @@ jobs:
         tags: "${{ github.sha }}"
         containerfiles: |
           ./Dockerfile
+  evaluate:
+    name: Evaluate
+    runs-on: ubuntu-latest
+    environment: production
+    needs: pr-pipeline 
+    steps:
+    - id: set-commit-status-fail
+      if: ${{ failure() }}
+      uses: huayuenh/ghacatalog/set-commit-status@main
+      with:
+        github_token: ${{ github.token }}
+        state: "failure"
+        description: "Complete - Failure"
+        context: "PR Pipeline"
+        sha: ${{ needs.start-pipeline.outputs.commit_id }}
+        target_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        github_repository: ${{ github.repository }}
 
+    - id: set-commit-status-success
+      if: ${{ success() }}
+      uses: huayuenh/ghacatalog/set-commit-status@main
+      with:
+        github_token: ${{ github.token }}
+        state: "success"
+        description: "Complete - Success"
+        context: "PR Pipeline"
+        sha: ${{ needs.start-pipeline.outputs.commit_id }}
+        target_url: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        github_repository: ${{ github.repository }}
