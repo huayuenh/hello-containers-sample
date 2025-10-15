@@ -77,6 +77,12 @@ jobs:
       with:
         #image: ${{ steps.build-image.outputs.image }}
         tags: "${{ steps.build-image.outputs.image }}:${{ steps.build-image.outputs.tags }}"
+
+
+    - id: va-scan
+      name: Check VA result
+      uses: huayuenh/ghacatalog/va@main
+
         #registry: us.icr.io/huayuen_tf_test
    # - id: ibmcloud-plugin-list
    #   name: Set up IBMCloud CLI and login
