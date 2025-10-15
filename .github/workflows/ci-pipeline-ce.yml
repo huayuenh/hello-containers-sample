@@ -1,0 +1,60 @@
+# This workflow will build a docker container, publish it to IBM Container Registry, and deploy it to IKS when there is a push to the "main" branch.
+#
+# To configure this workflow:
+#
+# 1. Ensure that your repository contains a Dockerfile
+# 2. Setup secrets in your repository by going to settings: Create ICR_NAMESPACE and IBM_CLOUD_API_KEY
+# 3. Change the values for the IBM_CLOUD_REGION, REGISTRY_HOSTNAME, IMAGE_NAME, IKS_CLUSTER, DEPLOYMENT_NAME, and PORT
+
+name: Build and Deploy to IKS
+
+on:
+  workflow_dispatch:
+    branches: [ ce ]
+  push:
+    branches: [ "ce" ]
+
+# Environment variables available to all jobs and steps in this workflow
+env:
+  GITHUB_SHA: ${{ github.sha }}
+  IBMCLOUD_API_KEY: ${{ secrets.IBMCLOUD_API_KEY }}
+  IBMCLOUD_REGION: ${{ vars.IBMCLOUD_REGION }}
+  ICR_NAMESPACE: ${{ vars.ICR_NAMESPACE }}
+  RESOURCE_GROUP: ${{ vars.RESOURCE_GROUP }}
+  REGISTRY_HOSTNAME: ${{ vars.ICR_REGION }}
+  IMAGE_NAME: ${{ vars.IMAGE_NAME }}
+  PROJECT_NAME: ${{ vars.PROJECT_NAME }}
+
+jobs:
+  setup-build-publish-deploy:
+    name: Setup, Test, Build and Deploy
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+
+    - id: checkout
+      name: Clone repo
+      uses: actions/checkout@v4
+  
+    - id: unit-test
+      name: Run Unit tests
+      run: |
+        npm install
+        npm run test-unit
+    
+    - name: Deploy Application to Code Engine
+      uses: IBM/code-engine-github-action@v1
+      with:
+        api-key: ${{ secrets.IBMCLOUD_API_KEY }}
+        resource-group: ${{ vars.RESOURCE_GROUP }}
+        region: ${{ vars.IBMCLOUD_REGION }}
+        project: ${{ vars.PROJECT_NAME }}
+        component: 'app'
+        name: 'my-app'
+        build-source: './'
+        cpu: 1
+        memory: 4G
+
+
+
+
