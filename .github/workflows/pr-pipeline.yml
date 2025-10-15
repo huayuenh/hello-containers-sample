@@ -17,7 +17,7 @@ on:
 # Environment variables available to all jobs and steps in this workflow
 env:
   GITHUB_SHA: ${{ github.sha }}
-  IMAGE_NAME: hello-container
+  IMAGE_NAME: ${{ vars.IMAGE_NAME }}
 jobs:
   pr-pipeline:
     name: Setup, Test, Build
@@ -51,7 +51,7 @@ jobs:
       name: Build image
       uses: redhat-actions/buildah-build@v2
       with:
-        image: us.icr.io/huayuen_tf_test/iks-test
+        image: "${{ vars.ICR_REGION }}/${{ vars.ICR_NAMESPACE }}/${{ vars.IMAGE_NAME }}"
         tags: "${{ github.sha }}"
         containerfiles: |
           ./Dockerfile
