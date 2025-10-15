@@ -20,11 +20,11 @@ env:
   IBMCLOUD_API_KEY: ${{ secrets.IBMCLOUD_API_KEY }}
   IBMCLOUD_REGION: ${{ vars.IBMCLOUD_REGION }}
   ICR_NAMESPACE: ${{ vars.ICR_NAMESPACE }}
-  REGISTRY_HOSTNAME: us.icr.io
-  IMAGE_NAME: iks-test
-  IKS_CLUSTER: example-iks-cluster-name-or-id
+  REGISTRY_HOSTNAME: ${{ vars.ICR_REGION }}
+  IMAGE_NAME: ${{ vars.IMAGE_NAME }}
+  IKS_CLUSTER: ${{ vars.CLUSTER_NAME }}
   DEPLOYMENT_NAME: iks-test
-  PORT: 5001
+  PORT: 8001
 
 jobs:
   setup-build-publish-deploy:
@@ -47,7 +47,7 @@ jobs:
       name: Build image
       uses: redhat-actions/buildah-build@v2
       with:
-        image: us.icr.io/huayuen_tf_test/iks-test
+        image: "${{ vars.ICR_REGION }}/${{ vars.ICR_NAMESPACE }}/${{ vars.IMAGE_NAME }}"
         tags: "${{ github.sha }}"
         containerfiles: |
           ./Dockerfile
@@ -57,8 +57,8 @@ jobs:
       name: IBMCloud CLI setup and login
       with:
         api_key: ${{ secrets.IBMCLOUD_API_KEY }}   
-        region: "us-south"
-        group: cd-setup
+        region: ${{ vars.IBMCLOUD_REGION }}
+        group: ${{ vars.RESOURCE_GROUP }}
         plugins: container-service, container-registry
     - name: ICR login
       run: |

@@ -17,8 +17,7 @@ on:
 # Environment variables available to all jobs and steps in this workflow
 env:
   GITHUB_SHA: ${{ github.sha }}
-  IMAGE_NAME: iks-test
-  IBMCLOUD_API_KEY: ${{ secrets.IBMCLOUD_API_KEY }}
+  IMAGE_NAME: hello-container
 jobs:
   pr-pipeline:
     name: Setup, Test, Build
@@ -29,16 +28,10 @@ jobs:
     - id: checkout
       name: Clone repo
       uses: actions/checkout@v4
-  
-    - id: test
-      name: place holder
-      uses: huayuenh/ghacatalog/git-clone@main
     
     - id: set-commit-status-start
       name: Set up initial commit status
       uses: huayuenh/ghacatalog/set-commit-status@main
-      #uses: terraform-ibm-modules/common-pipeline-assets/.github/workflows/set-commit-status.yml
-     # uses: ./set-commit-status.yml
       with:
         github_token: ${{ github.token }}
         state: "pending"
