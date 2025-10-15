@@ -24,6 +24,7 @@ env:
   IMAGE_NAME: ${{ vars.IMAGE_NAME }}
   IKS_CLUSTER: ${{ vars.CLUSTER_NAME }}
   DEPLOYMENT_NAME: ${{ vars.IKS_DEPLOYMENT_NAME }}
+  RESOURCE_GROUP: ${{ vars.RESOURCE_GROUP }}
   PORT: 8001
 
 jobs:
@@ -62,7 +63,7 @@ jobs:
         plugins: container-service, container-registry
     - name: ICR login
       run: |
-        ibmcloud login --apikey "${IBMCLOUD_API_KEY}" -r "${IBMCLOUD_REGION}" -g default
+        ibmcloud login --apikey "${IBMCLOUD_API_KEY}" -r "${IBMCLOUD_REGION}" -g ${RESOURCE_GROUP}
         ibmcloud cr region-set "${IBMCLOUD_REGION}"
         ibmcloud cr login
 
@@ -85,6 +86,7 @@ jobs:
 
     - name: Deploy to IKS
       run: |
+
         ibmcloud ks cluster config --cluster "cd-setup-test-cluster"
         kubectl config current-context
         kubectl create deployment $DEPLOYMENT_NAME --image=$REGISTRY_HOSTNAME/$ICR_NAMESPACE/$IMAGE_NAME:$GITHUB_SHA --dry-run -o yaml > deployment.yaml
